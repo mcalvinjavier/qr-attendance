@@ -4,823 +4,670 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>QR Code Attendance System</title>
+    <title>QR Attendance System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode@2.0.11/dist/html5-qrcode.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
-         :root {
-            --primary: #4a6bff;
-            --secondary: #6c757d;
-            --success: #28a745;
-            --danger: #dc3545;
-            --light: #f8f9fa;
-            --dark: #343a40;
+        .tab-content {
+            display: none;
         }
         
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        .tab-content.active {
+            display: block;
         }
         
-        body {
-            background-color: #f5f7fa;
-            color: #333;
-            line-height: 1.6;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1200px;
+        #qr-scanner {
+            max-width: 100%;
             margin: 0 auto;
-            padding: 20px;
         }
         
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        
-        h1 {
-            color: var(--primary);
-            margin-bottom: 10px;
-        }
-        
-        .description {
-            color: var(--secondary);
-            margin-bottom: 20px;
-        }
-        
-        .mode-toggle {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 30px;
-        }
-        
-        .mode-btn {
-            padding: 10px 20px;
-            border: none;
-            background-color: white;
-            color: var(--primary);
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-            border: 2px solid var(--primary);
-        }
-        
-        .mode-btn:first-child {
-            border-radius: 5px 0 0 5px;
-        }
-        
-        .mode-btn:last-child {
-            border-radius: 0 5px 5px 0;
-        }
-        
-        .mode-btn.active {
-            background-color: var(--primary);
-            color: white;
-        }
-        
-        .mode-content {
-            display: none;
-        }
-        
-        .mode-content.active {
-            display: block;
-        }
-        
-        .card {
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .card h2 {
-            color: var(--primary);
-            margin-bottom: 15px;
-            font-size: 1.5rem;
-        }
-        
-        .form-group {
-            margin-bottom: 15px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            color: var(--dark);
-        }
-        
-        input,
-        select,
-        button {
+        .video-container {
+            position: relative;
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 1rem;
+            max-width: 400px;
+            margin: 0 auto;
         }
         
-        button {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background-color 0.3s;
-            margin-top: 10px;
+        .scan-region-highlight {
+            position: absolute;
+            border: 2px dashed rgba(59, 130, 246, 0.8);
+            animation: pulse 2s infinite;
         }
         
-        button:hover {
-            background-color: #3a58e8;
-        }
-        
-        .btn-secondary {
-            background-color: var(--secondary);
-        }
-        
-        .btn-secondary:hover {
-            background-color: #5a6268;
-        }
-        
-        .btn-danger {
-            background-color: var(--danger);
-        }
-        
-        .btn-danger:hover {
-            background-color: #c82333;
-        }
-        
-        .btn-success {
-            background-color: var(--success);
-        }
-        
-        .btn-success:hover {
-            background-color: #218838;
-        }
-        
-        #qr-code {
-            margin: 20px 0;
-            display: flex;
-            justify-content: center;
-        }
-        
-        #scanner-container {
-            margin: 20px 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        #reader {
-            width: 100%;
-            max-width: 500px;
-        }
-        
-        #scan-result {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 5px;
-            display: none;
-        }
-        
-        .attendance-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        
-        .attendance-table th,
-        .attendance-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        
-        .attendance-table th {
-            background-color: var(--primary);
-            color: white;
-        }
-        
-        .attendance-table tr:hover {
-            background-color: #f5f5f5;
-        }
-        
-        .present {
-            color: var(--success);
-            font-weight: bold;
-        }
-        
-        .absent {
-            color: var(--danger);
-        }
-        
-        .subject-selector {
-            margin-bottom: 20px;
-        }
-        
-        .export-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        .floating-alert {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            background-color: var(--success);
-            color: white;
-            border-radius: 5px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-            opacity: 0;
-            transform: translateY(-20px);
-            transition: all 0.3s;
-        }
-        
-        .floating-alert.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        
-        @media (max-width: 768px) {
-            .container {
-                padding: 10px;
+        @keyframes pulse {
+            0% {
+                border-color: rgba(59, 130, 246, 0.8);
             }
-            .mode-btn {
-                padding: 8px 15px;
-                font-size: 0.9rem;
+            50% {
+                border-color: rgba(59, 130, 246, 0.2);
+            }
+            100% {
+                border-color: rgba(59, 130, 246, 0.8);
             }
         }
     </style>
 </head>
 
-<body>
-    <div class="container">
-        <header>
-            <h1>QR Code Attendance System</h1>
-            <p class="description">
-                Efficient attendance tracking using QR codes for educational institutions
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-blue-600 mb-2">
+                QR Attendance System
+            </h1>
+            <p class="text-gray-600">
+                Track student attendance easily with QR codes
             </p>
-        </header>
-
-        <div class="mode-toggle">
-            <button class="mode-btn active" data-mode="teacher">
-          Teacher Mode
-        </button>
-            <button class="mode-btn" data-mode="student">Student Mode</button>
-        </div>
-
-        <!-- Teacher Mode Content -->
-        <div id="teacher-mode" class="mode-content active">
-            <div class="card">
-                <h2>Manage Subjects</h2>
-
-                <div class="form-group">
-                    <label for="subject-name">Subject Name</label>
-                    <input type="text" id="subject-name" placeholder="Enter subject name" />
-                </div>
-
-                <div class="form-group">
-                    <label for="teacher-name">Teacher Name</label>
-                    <input type="text" id="teacher-name" placeholder="Enter your name" />
-                </div>
-
-                <button id="create-subject" class="btn-success">
-            Create Subject
-          </button>
-
-                <div class="subject-selector">
-                    <label for="subject-select">Select Subject</label>
-                    <select id="subject-select">
-              <option value="">Select a subject</option>
-            </select>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2>Generate QR Code</h2>
-                <p>Select a subject above to generate a QR code for attendance</p>
-
-                <div id="qr-code"></div>
-
-                <button id="generate-qr" class="btn-secondary" disabled>
-            Generate Attendance QR Code
-          </button>
-                <button id="end-session" class="btn-danger" disabled>
-            End Current Session
-          </button>
-            </div>
-
-            <div class="card">
-                <h2>Attendance Records</h2>
-
-                <div class="export-buttons">
-                    <button id="export-csv" class="btn-secondary">Export as CSV</button>
-                    <button id="export-json" class="btn-secondary">
-              Export as JSON
+            <div class="mt-4 border-b border-gray-200">
+                <div class="flex justify-center space-x-4">
+                    <button onclick="switchTab('teacher')" class="tab-button px-4 py-2 font-medium text-sm rounded-t-lg border border-b-0" id="teacher-tab">
+              Teacher
+            </button>
+                    <button onclick="switchTab('student')" class="tab-button px-4 py-2 font-medium text-sm rounded-t-lg border border-b-0" id="student-tab">
+              Student
             </button>
                 </div>
-
-                <div id="records-container">
-                    <p>Select a subject to view attendance records</p>
-                </div>
             </div>
+        </header>
+
+        <!-- Teacher Tab -->
+        <div id="teacher" class="tab-content active bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-semibold mb-6 text-gray-800">
+                Teacher Dashboard
+            </h2>
+
+            <div class="mb-8">
+                <h3 class="text-xl font-medium mb-4 text-gray-700">
+                    Generate QR Code
+                </h3>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="subject" class="block text-sm font-medium text-gray-700 mb-1">Subject</label
+                >
+                <input
+                  type="text"
+                  id="subject"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="e.g. Mathematics"
+                />
+              </div>
+              <div>
+                <label
+                  for="date"
+                  class="block text-sm font-medium text-gray-700 mb-1"
+                  >Date</label
+                >
+                <input
+                  type="date"
+                  id="date"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label
+                  for="session"
+                  class="block text-sm font-medium text-gray-700 mb-1"
+                  >Session</label
+                >
+                <select
+                  id="session"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="Morning">Morning</option>
+                  <option value="Afternoon">Afternoon</option>
+                  <option value="Evening">Evening</option>
+                </select>
+              </div>
+              <button
+                onclick="generateQR()"
+                class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition"
+              >
+                Generate QR Code
+              </button>
+            </div>
+            <div
+              class="border border-gray-200 rounded-lg p-4 flex flex-col items-center"
+            >
+              <h4 class="text-lg font-medium mb-3 text-gray-700">
+                Today's QR Code
+              </h4>
+              <div id="qrcode" class="mb-4"></div>
+              <button
+                onclick="downloadQR()"
+                class="bg-green-600 text-white py-1 px-3 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-sm transition"
+              >
+                Download QR Code
+              </button>
+            </div>
+          </div>
         </div>
 
-        <!-- Student Mode Content -->
-        <div id="student-mode" class="mode-content">
-            <div class="card">
-                <h2>Scan Attendance QR Code</h2>
-                <p>
-                    Position the QR code within the frame below to mark your attendance
-                </p>
-
-                <div id="scanner-container">
-                    <div id="reader" width="500px"></div>
-                    <div id="scan-result"></div>
-                </div>
-
-                <div class="form-group">
-                    <label for="student-id">Student ID</label>
-                    <input type="text" id="student-id" placeholder="Enter your student ID" />
-                </div>
-
-                <div class="form-group">
-                    <label for="student-name">Student Name</label>
-                    <input type="text" id="student-name" placeholder="Enter your name" />
-                </div>
-
-                <button id="manual-attendance" class="btn-success">
-            Mark Attendance Manually
-          </button>
+        <div>
+          <h3 class="text-xl font-medium mb-4 text-gray-700">
+            Attendance Records
+          </h3>
+          <div class="bg-gray-50 rounded-lg p-4">
+            <div class="mb-4">
+              <label
+                for="filter-subject"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >Filter by Subject</label
+              >
+              <select
+                id="filter-subject"
+                onchange="filterRecords()"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">All Subjects</option>
+              </select>
             </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-100">
+                  <tr>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Student ID
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Name
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Subject
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Date
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Session
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Time
+                    </th>
+                  </tr>
+                </thead>
+                <tbody
+                  id="attendance-table"
+                  class="bg-white divide-y divide-gray-200"
+                >
+                  <!-- Attendance records will be inserted here -->
+                </tbody>
+              </table>
+            </div>
+            <div class="mt-4 flex justify-end">
+              <button
+                onclick="exportToCSV()"
+                class="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition"
+              >
+                Export to CSV
+              </button>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <div id="alert" class="floating-alert"></div>
+      <!-- Student Tab -->
+      <div id="student" class="tab-content bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-2xl font-semibold mb-6 text-gray-800">
+          Student Attendance
+        </h2>
+
+        <div class="text-center">
+          <div class="video-container mb-4">
+            <video id="qr-scanner" playsinline></video>
+            <svg
+              class="scan-region-highlight"
+              style="width: 100%; height: 100%"
+              viewBox="0 0 238 238"
+              preserveAspectRatio="none"
+            >
+              <path
+                d="M31 2H10a8 8 0 0 0-8 8v21M207 2h21a8 8 0 0 1 8 8v21m0 176v21a8 8 0 0 1-8 8h-21m-176 0H10a8 8 0 0 1-8-8v-21"
+              ></path>
+            </svg>
+          </div>
+          <div id="scanner-status" class="text-sm text-gray-500 mb-4"></div>
+
+          <div id="student-form" class="max-w-md mx-auto hidden">
+            <div class="space-y-4">
+              <div>
+                <label
+                  for="student-id"
+                  class="block text-sm font-medium text-gray-700 mb-1"
+                  >Student ID</label
+                >
+                <input
+                  type="text"
+                  id="student-id"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="e.g. S12345"
+                />
+              </div>
+              <div>
+                <label
+                  for="student-name"
+                  class="block text-sm font-medium text-gray-700 mb-1"
+                  >Name</label
+                >
+                <input
+                  type="text"
+                  id="student-name"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Your name"
+                />
+              </div>
+              <button
+                onclick="markAttendance()"
+                class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition"
+              >
+                Mark Attendance
+              </button>
+            </div>
+          </div>
+
+          <div id="attendance-result" class="mt-6 hidden">
+            <div class="p-4 border border-green-200 bg-green-50 rounded-md">
+              <div class="flex">
+                <div class="flex-shrink-0">
+                  <svg
+                    class="h-5 w-5 text-green-400"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <div class="ml-3">
+                  <h3 class="text-sm font-medium text-green-800">
+                    Attendance Recorded
+                  </h3>
+                  <div
+                    id="attendance-details"
+                    class="mt-2 text-sm text-green-700"
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script>
-        // Database simulation using localStorage
-        const DB = {
-            subjects: JSON.parse(localStorage.getItem("subjects")) || [],
-            attendance: JSON.parse(localStorage.getItem("attendance")) || {},
+      // Initialize data storage
+      let attendanceRecords =
+        JSON.parse(localStorage.getItem("attendanceRecords")) || [];
+      let currentQRData = localStorage.getItem("currentQRData") || "";
 
-            save: function() {
-                localStorage.setItem("subjects", JSON.stringify(this.subjects));
-                localStorage.setItem("attendance", JSON.stringify(this.attendance));
-            },
+      // DOM elements
+      const teacherTab = document.getElementById("teacher");
+      const studentTab = document.getElementById("student");
+      const qrcodeElement = document.getElementById("qrcode");
+      const attendanceTable = document.getElementById("attendance-table");
+      const filterSubject = document.getElementById("filter-subject");
+      const scannerStatus = document.getElementById("scanner-status");
+      const studentForm = document.getElementById("student-form");
+      const attendanceResult = document.getElementById("attendance-result");
+      const studentIdInput = document.getElementById("student-id");
+      const studentNameInput = document.getElementById("student-name");
 
-            addSubject: function(name, teacher) {
-                const subject = {
-                    id: Date.now().toString(),
-                    name: name,
-                    teacher: teacher,
-                    active: false,
-                    qrData: null,
-                    createdAt: new Date().toISOString(),
-                };
-
-                this.subjects.push(subject);
-                this.save();
-                return subject;
-            },
-
-            getSubject: function(id) {
-                return this.subjects.find((subject) => subject.id === id);
-            },
-
-            activateSubject: function(id) {
-                this.subjects.forEach((subject) => {
-                    subject.active = subject.id === id;
-                });
-                this.save();
-            },
-
-            deactivateAll: function() {
-                this.subjects.forEach((subject) => {
-                    subject.active = false;
-                    subject.qrData = null;
-                });
-                this.save();
-            },
-
-            generateQRData: function(subjectId) {
-                // Generate a unique QR data with timestamp
-                const subject = this.getSubject(subjectId);
-                if (subject) {
-                    subject.qrData = JSON.stringify({
-                        subjectId: subject.id,
-                        timestamp: Date.now(),
-                    });
-                    this.save();
-                    return subject.qrData;
-                }
-                return null;
-            },
-
-            recordAttendance: function(qrData, studentId, studentName) {
-                try {
-                    const data = JSON.parse(qrData);
-                    const subjectId = data.subjectId;
-                    const subject = DB.getSubject(subjectId);
-
-                    if (!subject) {
-                        throw new Error("Invalid subject");
-                    }
-
-                    if (!this.attendance[subjectId]) {
-                        this.attendance[subjectId] = {
-                            subjectId: subjectId,
-                            subjectName: subject.name,
-                            records: [],
-                        };
-                    }
-
-                    // Check if student already marked attendance
-                    const existingRecord = this.attendance[subjectId].records.find(
-                        (record) => record.studentId === studentId
-                    );
-
-                    if (existingRecord) {
-                        existingRecord.timestamp = new Date().toISOString();
-                        existingRecord.status = "present";
-                    } else {
-                        this.attendance[subjectId].records.push({
-                            studentId: studentId,
-                            studentName: studentName,
-                            timestamp: new Date().toISOString(),
-                            status: "present",
-                        });
-                    }
-
-                    this.save();
-                    return {
-                        subjectName: subject.name,
-                        studentName: studentName,
-                    };
-                } catch (e) {
-                    console.error("Error recording attendance:", e);
-                    return null;
-                }
-            },
-
-            getAttendanceForSubject: function(subjectId) {
-                return (
-                    this.attendance[subjectId] || {
-                        subjectId: subjectId,
-                        subjectName:
-                            (this.getSubject(subjectId) &&
-                                this.getSubject(subjectId).name) ||
-                            "Unknown",
-                        records: [],
-                    }
-                );
-            },
-
-            exportAsCSV: function(subjectId) {
-                const data = this.getAttendanceForSubject(subjectId);
-                let csv = "Student ID,Student Name,Timestamp,Status\n";
-
-                data.records.forEach((record) => {
-                    csv += `${record.studentId},"${record.studentName}",${record.timestamp},${record.status}\n`;
-                });
-
-                return csv;
-            },
-        };
-
-        // DOM Elements
-        const teacherModeBtn = document.querySelector('[data-mode="teacher"]');
-        const studentModeBtn = document.querySelector('[data-mode="student"]');
-        const teacherModeContent = document.getElementById("teacher-mode");
-        const studentModeContent = document.getElementById("student-mode");
-        const subjectNameInput = document.getElementById("subject-name");
-        const teacherNameInput = document.getElementById("teacher-name");
-        const createSubjectBtn = document.getElementById("create-subject");
-        const subjectSelect = document.getElementById("subject-select");
-        const generateQRBtn = document.getElementById("generate-qr");
-        const endSessionBtn = document.getElementById("end-session");
-        const qrCodeDiv = document.getElementById("qr-code");
-        const recordsContainer = document.getElementById("records-container");
-        const exportCsvBtn = document.getElementById("export-csv");
-        const exportJsonBtn = document.getElementById("export-json");
-        const studentIdInput = document.getElementById("student-id");
-        const studentNameInput = document.getElementById("student-name");
-        const manualAttendanceBtn = document.getElementById("manual-attendance");
-        const scanResultDiv = document.getElementById("scan-result");
-        const alertDiv = document.getElementById("alert");
-
-        // Initialize QR scanner
-        let html5QrcodeScanner;
-
-        // Mode switching
-        teacherModeBtn.addEventListener("click", () => {
-            teacherModeBtn.classList.add("active");
-            studentModeBtn.classList.remove("active");
-            teacherModeContent.classList.add("active");
-            studentModeContent.classList.remove("active");
-            stopScanner();
+      // Tab switching
+      function switchTab(tabName) {
+        document.querySelectorAll(".tab-content").forEach((tab) => {
+          tab.classList.remove("active");
+        });
+        document.querySelectorAll(".tab-button").forEach((button) => {
+          button.classList.remove("bg-blue-600", "text-white");
+          button.classList.add("bg-white", "text-gray-700");
         });
 
-        studentModeBtn.addEventListener("click", () => {
-            studentModeBtn.classList.add("active");
-            teacherModeBtn.classList.remove("active");
-            studentModeContent.classList.add("active");
-            teacherModeContent.classList.remove("active");
-            initScanner();
+        document.getElementById(tabName).classList.add("active");
+        document
+          .getElementById(`${tabName}-tab`)
+          .classList.remove("bg-white", "text-gray-700");
+        document
+          .getElementById(`${tabName}-tab`)
+          .classList.add("bg-blue-600", "text-white");
+
+        if (tabName === "student") {
+          initializeScanner();
+        }
+      }
+
+      // Teacher functions
+      function generateQR() {
+        const subject = document.getElementById("subject").value;
+        const date = document.getElementById("date").value;
+        const session = document.getElementById("session").value;
+
+        if (!subject || !date) {
+          alert("Please provide both subject and date");
+          return;
+        }
+
+        const qrData = JSON.stringify({
+          subject: subject,
+          date: date,
+          session: session,
+          timestamp: new Date().getTime(),
         });
 
-        // Teacher functionality
-        createSubjectBtn.addEventListener("click", () => {
-            const subjectName = subjectNameInput.value.trim();
-            const teacherName = teacherNameInput.value.trim();
+        currentQRData = qrData;
+        localStorage.setItem("currentQRData", qrData);
 
-            if (!subjectName || !teacherName) {
-                showAlert("Please enter both subject and teacher names", "danger");
-                return;
-            }
+        // Clear previous QR code
+        qrcodeElement.innerHTML = "";
 
-            const subject = DB.addSubject(subjectName, teacherName);
-            updateSubjectSelect();
-            subjectNameInput.value = "";
-            teacherNameInput.value = "";
-            showAlert(`Subject "${subject.name}" created successfully!`);
+        // Generate new QR code
+        new QRCode(qrcodeElement, {
+          text: qrData,
+          width: 200,
+          height: 200,
+          colorDark: "#000000",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.H,
         });
 
-        subjectSelect.addEventListener("change", (e) => {
-            const subjectId = e.target.value;
-            if (subjectId) {
-                generateQRBtn.disabled = false;
-                updateAttendanceRecords(subjectId);
-            } else {
-                generateQRBtn.disabled = true;
-                recordsContainer.innerHTML =
-                    "<p>Select a subject to view attendance records</p>";
-                qrCodeDiv.innerHTML = "";
-                endSessionBtn.disabled = true;
-            }
+        updateSubjectsDropdown();
+      }
+
+      function downloadQR() {
+        if (!currentQRData) {
+          alert("No QR code to download. Please generate one first.");
+          return;
+        }
+
+        html2canvas(qrcodeElement).then((canvas) => {
+          const link = document.createElement("a");
+          link.download = "attendance-qr.png";
+          link.href = canvas.toDataURL("image/png");
+          link.click();
         });
+      }
 
-        generateQRBtn.addEventListener("click", () => {
-            const subjectId = subjectSelect.value;
-            if (subjectId) {
-                DB.deactivateAll();
-                DB.activateSubject(subjectId);
-                const qrData = DB.generateQRData(subjectId);
+      function updateSubjectsDropdown() {
+        // Get all unique subjects from records
+        const subjects = [
+          ...new Set(attendanceRecords.map((record) => record.subject)),
+        ];
 
-                if (qrData) {
-                    qrCodeDiv.innerHTML = "";
-                    new QRCode(qrCodeDiv, {
-                        text: qrData,
-                        width: 200,
-                        height: 200,
-                        colorDark: "#000000",
-                        colorLight: "#ffffff",
-                        correctLevel: QRCode.CorrectLevel.H,
-                    });
-
-                    const subject = DB.getSubject(subjectId);
-                    showAlert(
-                        `QR code generated for ${subject.name}. Show this to students for scanning.`
-                    );
-                    endSessionBtn.disabled = false;
-                }
-            }
+        filterSubject.innerHTML = '<option value="">All Subjects</option>';
+        subjects.forEach((subject) => {
+          const option = document.createElement("option");
+          option.value = subject;
+          option.textContent = subject;
+          filterSubject.appendChild(option);
         });
+      }
 
-        endSessionBtn.addEventListener("click", () => {
-            DB.deactivateAll();
-            qrCodeDiv.innerHTML = "";
-            endSessionBtn.disabled = true;
-            showAlert("Attendance session ended. QR code is no longer valid.");
+      function filterRecords() {
+        const selectedSubject = filterSubject.value;
+        updateAttendanceTable(selectedSubject);
+      }
+
+      function updateAttendanceTable(filterSubject = "") {
+        attendanceTable.innerHTML = "";
+
+        let filteredRecords = attendanceRecords;
+        if (filterSubject) {
+          filteredRecords = attendanceRecords.filter(
+            (record) => record.subject === filterSubject
+          );
+        }
+
+        filteredRecords.forEach((record) => {
+          const row = document.createElement("tr");
+
+          const studentIDCell = document.createElement("td");
+          studentIDCell.textContent = record.studentID;
+          studentIDCell.className =
+            "px-6 py-4 whitespace-nowrap text-sm text-gray-900";
+          row.appendChild(studentIDCell);
+
+          const nameCell = document.createElement("td");
+          nameCell.textContent = record.name;
+          nameCell.className =
+            "px-6 py-4 whitespace-nowrap text-sm text-gray-900";
+          row.appendChild(nameCell);
+
+          const subjectCell = document.createElement("td");
+          subjectCell.textContent = record.subject;
+          subjectCell.className =
+            "px-6 py-4 whitespace-nowrap text-sm text-gray-900";
+          row.appendChild(subjectCell);
+
+          const dateCell = document.createElement("td");
+          dateCell.textContent = record.date;
+          dateCell.className =
+            "px-6 py-4 whitespace-nowrap text-sm text-gray-900";
+          row.appendChild(dateCell);
+
+          const sessionCell = document.createElement("td");
+          sessionCell.textContent = record.session;
+          sessionCell.className =
+            "px-6 py-4 whitespace-nowrap text-sm text-gray-900";
+          row.appendChild(sessionCell);
+
+          const timeCell = document.createElement("td");
+          timeCell.textContent = record.time;
+          timeCell.className =
+            "px-6 py-4 whitespace-nowrap text-sm text-gray-900";
+          row.appendChild(timeCell);
+
+          attendanceTable.appendChild(row);
         });
+      }
 
-        exportCsvBtn.addEventListener("click", () => {
-            const subjectId = subjectSelect.value;
-            if (subjectId) {
-                const csv = DB.exportAsCSV(subjectId);
-                const blob = new Blob([csv], {
-                    type: "text/csv;charset=utf-8;",
-                });
-                const subjectName = DB.getSubject(subjectId)
-                    .name.replace(/[^a-z0-9]/gi, "_")
-                    .toLowerCase();
-                saveAs(blob, `attendance_${subjectName}.csv`);
-                showAlert("Attendance data exported as CSV", "success");
-            } else {
-                showAlert("Please select a subject first", "danger");
-            }
-        });
+      function exportToCSV() {
+        if (attendanceRecords.length === 0) {
+          alert("No attendance records to export");
+          return;
+        }
 
-        exportJsonBtn.addEventListener("click", () => {
-            const subjectId = subjectSelect.value;
-            if (subjectId) {
-                const data = DB.getAttendanceForSubject(subjectId);
-                const json = JSON.stringify(data, null, 2);
-                const blob = new Blob([json], {
-                    type: "application/json;charset=utf-8;",
-                });
-                const subjectName = DB.getSubject(subjectId)
-                    .name.replace(/[^a-z0-9]/gi, "_")
-                    .toLowerCase();
-                saveAs(blob, `attendance_${subjectName}.json`);
-                showAlert("Attendance data exported as JSON", "success");
-            } else {
-                showAlert("Please select a subject first", "danger");
-            }
-        });
+        let filteredRecords = attendanceRecords;
+        const selectedSubject = filterSubject.value;
+        if (selectedSubject) {
+          filteredRecords = attendanceRecords.filter(
+            (record) => record.subject === selectedSubject
+          );
+        }
 
-        // Student functionality
-        function initScanner() {
-            if (!window.Html5QrcodeScanner) {
-                showAlert("QR scanner library not loaded", "danger");
-                return;
-            }
+        // Format data for CSV
+        const csv = Papa.unparse(filteredRecords);
 
-            html5QrcodeScanner = new Html5QrcodeScanner(
-                "reader", {
-                    fps: 10,
-                    qrbox: 250,
-                    rememberLastUsedCamera: true,
-                },
-                /* verbose= */
-                false
-            );
+        // Create download link
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `attendance-${new Date()
+          .toISOString()
+          .slice(0, 10)}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
 
-            function onScanSuccess(decodedText, decodedResult) {
-                const studentId = studentIdInput.value.trim();
-                const studentName = studentNameInput.value.trim();
+      // Student functions
+      function initializeScanner() {
+        studentForm.classList.add("hidden");
+        attendanceResult.classList.add("hidden");
 
-                if (!studentId || !studentName) {
-                    showAlert("Please enter both student ID and name", "danger");
-                    return;
-                }
+        if (!("BarcodeDetector" in window)) {
+          scannerStatus.innerHTML =
+            "<p class='text-red-500'>Your browser doesn't support the BarcodeDetector API. Try Chrome or Edge on Android/iOS.</p>";
+          return;
+        }
 
-                const result = DB.recordAttendance(
-                    decodedText,
-                    studentId,
-                    studentName
-                );
-                if (result) {
-                    scanResultDiv.innerHTML = `
-                      <p><strong>Attendance recorded successfully!</strong></p>
-                      <p>Subject: ${result.subjectName}</p>
-                      <p>Student: ${result.studentName}</p>
-                      <p>Time: ${new Date().toLocaleString()}</p>
-                  `;
-                    scanResultDiv.style.display = "block";
-                    scanResultDiv.style.backgroundColor = "#e8f5e9";
-                    showAlert("Attendance recorded successfully!", "success");
+        scannerStatus.textContent = "Preparing camera...";
+
+        // Check for camera permissions
+        navigator.mediaDevices
+          .getUserMedia({ video: { facingMode: "environment" } })
+          .then((stream) => {
+            const videoElement = document.getElementById("qr-scanner");
+            videoElement.srcObject = stream;
+
+            videoElement.onloadedmetadata = () => {
+              videoElement.play();
+              startScanning();
+            };
+          })
+          .catch((err) => {
+            scannerStatus.innerHTML = `<p class="text-red-500">Camera access denied: ${err.message}</p>`;
+          });
+      } 
+
+      function startScanning() {
+        const videoElement = document.getElementById("qr-scanner");
+        const barcodeDetector = new BarcodeDetector({ formats: ["qr_code"] });
+
+        scannerStatus.textContent = "Scanning for QR codes...";
+
+        function scanFrame() {
+          if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
+            barcodeDetector
+              .detect(videoElement)
+              .then((barcodes) => {
+                if (barcodes.length > 0) {
+                  const qrData = barcodes[0].rawValue;
+                  handleScannedQR(qrData);
                 } else {
-                    scanResultDiv.innerHTML =
-                        "<p>Invalid QR code. Please scan a valid attendance QR code.</p>";
-                    scanResultDiv.style.display = "block";
-                    scanResultDiv.style.backgroundColor = "#ffebee";
-                    showAlert("Invalid QR code", "danger");
+                  requestAnimationFrame(scanFrame);
                 }
-            }
-
-            html5QrcodeScanner.render(onScanSuccess);
+              })
+              .catch((err) => {
+                console.error("Barcode detection error:", err);
+                requestAnimationFrame(scanFrame);
+              });
+          } else {
+            requestAnimationFrame(scanFrame);
+          }
         }
 
-        function stopScanner() {
-            if (html5QrcodeScanner) {
-                html5QrcodeScanner.clear().catch((error) => {
-                    console.error("Failed to clear QR scanner", error);
-                });
-                document.getElementById("reader").innerHTML = "";
-                scanResultDiv.style.display = "none";
-            }
+        scanFrame();
+      }
+
+      function handleScannedQR(qrData) {
+        try {
+          const qrObject = JSON.parse(qrData);
+
+          // Validate QR data structure
+          if (!qrObject.subject || !qrObject.date || !qrObject.session) {
+            throw new Error("Invalid QR code data");
+          }
+
+          scannerStatus.textContent = "";
+          studentForm.classList.remove("hidden");
+
+          // Store QR data in localStorage for markAttendance
+          localStorage.setItem("currentQRData", qrData);
+
+          // Stop the video stream
+          const videoElement = document.getElementById("qr-scanner");
+          const stream = videoElement.srcObject;
+          stream.getTracks().forEach((track) => track.stop());
+        } catch (err) {
+          scannerStatus.innerHTML = `<p class="text-red-500">Error: Invalid QR code. ${err.message}</p>`;
+        }
+      }
+
+      function markAttendance() {
+        const studentID = studentIdInput.value;
+        const studentName = studentNameInput.value;
+
+        if (!studentID || !studentName) {
+          alert("Please provide both Student ID and Name");
+          return;
         }
 
-        manualAttendanceBtn.addEventListener("click", () => {
-            const qrData = prompt("Enter the QR code data manually:");
-            if (qrData) {
-                const studentId = studentIdInput.value.trim();
-                const studentName = studentNameInput.value.trim();
+        try {
+          const qrData = JSON.parse(localStorage.getItem("currentQRData"));
+          const attendanceTime = new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
 
-                if (!studentId || !studentName) {
-                    showAlert("Please enter both student ID and name", "danger");
-                    return;
-                }
+          const newRecord = {
+            studentID: studentID,
+            name: studentName,
+            subject: qrData.subject,
+            date: qrData.date,
+            session: qrData.session,
+            time: attendanceTime,
+          };
 
-                const result = DB.recordAttendance(qrData, studentId, studentName);
-                if (result) {
-                    scanResultDiv.innerHTML = `
-                      <p><strong>Attendance recorded successfully!</strong></p>
-                      <p>Subject: ${result.subjectName}</p>
-                      <p>Student: ${result.studentName}</p>
-                      <p>Time: ${new Date().toLocaleString()}</p>
-                  `;
-                    scanResultDiv.style.display = "block";
-                    scanResultDiv.style.backgroundColor = "#e8f5e9";
-                    showAlert("Attendance recorded successfully!", "success");
-                } else {
-                    scanResultDiv.innerHTML =
-                        "<p>Invalid QR code data. Please enter valid data.</p>";
-                    scanResultDiv.style.display = "block";
-                    scanResultDiv.style.backgroundColor = "#ffebee";
-                    showAlert("Invalid QR code data", "danger");
-                }
-            }
-        });
+          attendanceRecords.push(newRecord);
+          localStorage.setItem(
+            "attendanceRecords",
+            JSON.stringify(attendanceRecords)
+          );
 
-        // Helper functions
-        function updateSubjectSelect() {
-            subjectSelect.innerHTML = '<option value="">Select a subject</option>';
-            DB.subjects.forEach((subject) => {
-                const option = document.createElement("option");
-                option.value = subject.id;
-                option.textContent = `${subject.name} (${subject.teacher})`;
-                subjectSelect.appendChild(option);
-            });
-        }
-
-        function updateAttendanceRecords(subjectId) {
-            const attendance = DB.getAttendanceForSubject(subjectId);
-
-            if (attendance.records.length === 0) {
-                recordsContainer.innerHTML =
-                    "<p>No attendance records found for this subject</p>";
-                return;
-            }
-
-            let html = `
-              <h3>Attendance for ${attendance.subjectName}</h3>
-              <div class="table-responsive">
-                  <table class="attendance-table">
-                      <thead>
-                          <tr>
-                              <th>Student ID</th>
-                              <th>Student Name</th>
-                              <th>Time</th>
-                              <th>Status</th>
-                          </tr>
-                      </thead>
-                      <tbody>
-          `;
-
-            attendance.records.forEach((record) => {
-                html += `
-                  <tr>
-                      <td>${record.studentId}</td>
-                      <td>${record.studentName}</td>
-                      <td>${new Date(record.timestamp).toLocaleString()}</td>
-                      <td class="${
-                        record.status === "present" ? "present" : "absent"
-                      }">
-                          ${record.status.toUpperCase()}
-                      </td>
-                  </tr>
+          // Show success message
+          studentForm.classList.add("hidden");
+          document.getElementById("attendance-details").innerHTML = `
+                  <p><strong>Student ID:</strong> ${studentID}</p>
+                  <p><strong>Name:</strong> ${studentName}</p>
+                  <p><strong>Subject:</strong> ${qrData.subject}</p>
+                  <p><strong>Date:</strong> ${qrData.date}</p>
+                  <p><strong>Session:</strong> ${qrData.session}</p>
+                  <p><strong>Time:</strong> ${attendanceTime}</p>
               `;
-            });
+          attendanceResult.classList.remove("hidden");
 
-            html += `
-                      </tbody>
-                  </table>
-              </div>
-          `;
+          // Clear inputs
+          studentIdInput.value = "";
+          studentNameInput.value = "";
 
-            recordsContainer.innerHTML = html;
+          setTimeout(() => {
+            location.reload(); // Refresh to go back to scanning
+          }, 5000);
+        } catch (err) {
+          alert("Error recording attendance. Please try again.");
+          console.error(err);
         }
+      }
 
-        function showAlert(message, type = "success") {
-            alertDiv.textContent = message;
-            alertDiv.className = "floating-alert";
+      // Initialize on page load
+      window.onload = function () {
+        updateAttendanceTable();
+        updateSubjectsDropdown();
 
-            // Set color based on type
-            if (type === "success") {
-                alertDiv.style.backgroundColor = "var(--success)";
-            } else if (type === "danger") {
-                alertDiv.style.backgroundColor = "var(--danger)";
-            } else if (type === "warning") {
-                alertDiv.style.backgroundColor = "var(--secondary)";
-            }
+        // Set default date to today
+        const today = new Date();
+        const dateString = today.toISOString().split("T")[0];
+        document.getElementById("date").value = dateString;
 
-            alertDiv.classList.add("show");
-
-            setTimeout(() => {
-                alertDiv.classList.remove("show");
-            }, 3000);
+        // Show QR code if already generated
+        if (currentQRData) {
+          new QRCode(qrcodeElement, {
+            text: currentQRData,
+            width: 200,
+            height: 200,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H,
+          });
         }
-
-        // Initialize the app
-        updateSubjectSelect();
+      };
     </script>
-</body>
-
+  </body>
 </html>
